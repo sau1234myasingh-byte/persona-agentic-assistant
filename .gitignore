@@ -1,0 +1,23 @@
+# Secrets and local configuration
+.env
+.streamlit/secrets.toml
+
+# Python environments and generated files
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.so
+
+# Test, tooling, and editor output
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.vscode/
+.idea/
+
+# Operating-system files
+.DS_Store
+Thumbs.db
