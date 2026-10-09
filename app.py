@@ -16,7 +16,7 @@ Run it with:
 # 1. IMPORTS
 # ---------------------------------------------------------------------------
 import datetime
-
+from database import init_db, load_reminders, save_reminders
 import streamlit as st
 
 from config import (
@@ -292,37 +292,43 @@ if "messages" not in st.session_state:
         }
     ]
 
-if "reminders" not in st.session_state:
-    st.session_state.reminders = []
+# Initialize database and load reminders
+init_db()
 
-if len(st.session_state.reminders) == 0:
-    _now = datetime.datetime.now()
-    st.session_state.reminders = [
-        {
-            "id": 1,
-            "task": "📧 Reply to client proposal email",
-            "timestamp": _now - datetime.timedelta(days=2),  # PAST -> Missed
-            "status": "active",
-        },
-        {
-            "id": 2,
-            "task": "📞 Call the coach about training schedule",
-            "timestamp": _now - datetime.timedelta(hours=5),  # PAST -> Missed
-            "status": "active",
-        },
-        {
-            "id": 3,
-            "task": "📝 Prepare weekly report for captain",
-            "timestamp": _now + datetime.timedelta(days=1),  # FUTURE
-            "status": "active",
-        },
-        {
-            "id": 4,
-            "task": "🏄 Team stand-up meeting prep",
-            "timestamp": _now + datetime.timedelta(days=3),  # FUTURE
-            "status": "active",
-        },
-    ]
+if "reminders" not in st.session_state:
+    loaded = load_reminders()
+    if loaded:
+        st.session_state.reminders = loaded
+    else:
+        # First time — create some demo reminders
+        _now = datetime.datetime.now()
+        st.session_state.reminders = [
+            {
+                "id": 1,
+                "task": "📧 Reply to client proposal email",
+                "timestamp": _now - datetime.timedelta(days=2),
+                "status": "active",
+            },
+            {
+                "id": 2,
+                "task": "📞 Call the coach about training schedule",
+                "timestamp": _now - datetime.timedelta(hours=5),
+                "status": "active",
+            },
+            {
+                "id": 3,
+                "task": "📝 Prepare weekly report for captain",
+                "timestamp": _now + datetime.timedelta(days=1),
+                "status": "active",
+            },
+            {
+                "id": 4,
+                "task": "🏄 Team stand-up meeting prep",
+                "timestamp": _now + datetime.timedelta(days=3),
+                "status": "active",
+            },
+        ]
+        save_reminders(st.session_state.reminders)
 
 # ---------------------------------------------------------------------------
 # 5. SIDEBAR — "Persona Command Center"
@@ -399,6 +405,39 @@ with st.sidebar:
             if st.session_state.unread_count > 0:
                 st.session_state.unread_count -= 1
             st.rerun()
+            st.divider()
+st.markdown("### 🔄 Demo Controls")
+if st.button("Reset Demo Reminders", use_container_width=True):
+    _now = datetime.datetime.now()
+    st.session_state.reminders = [
+        {
+            "id": 1,
+            "task": "📧 Reply to client proposal email",
+            "timestamp": _now - datetime.timedelta(days=2),
+            "status": "active",
+        },
+        {
+            "id": 2,
+            "task": "📞 Call the coach about training schedule",
+            "timestamp": _now - datetime.timedelta(hours=5),
+            "status": "active",
+        },
+        {
+            "id": 3,
+            "task": "📝 Prepare weekly report for captain",
+            "timestamp": _now + datetime.timedelta(days=1),
+            "status": "active",
+        },
+        {
+            "id": 4,
+            "task": "🏄 Team stand-up meeting prep",
+            "timestamp": _now + datetime.timedelta(days=3),
+            "status": "active",
+        },
+    ]
+    save_reminders(st.session_state.reminders)
+    st.success("Demo reminders restored!")
+    st.rerun()
 
     st.divider()
 
@@ -431,6 +470,41 @@ if not active_api_key:
     )
 
 st.divider()
+
+
+# ---------------------------------------------------------------------------
+# 7b. CREATE NEW REMINDER FORM
+# ---------------------------------------------------------------------------
+st.markdown("### ➕ Create New Reminder")
+
+with st.form(key="new_reminder_form", clear_on_submit=True):
+    new_task = st.text_input("Task description", placeholder="e.g. Submit internship report")
+    col_date, col_time = st.columns(2)
+    with col_date:
+        new_date = st.date_input("Date", value=datetime.datetime.now().date())
+    with col_time:
+        new_time = st.time_input("Time", value=datetime.datetime.now().time())
+
+    submitted = st.form_submit_button("Add Reminder", use_container_width=True)
+
+    if submitted:
+        if new_task.strip() == "":
+            st.warning("Please enter a task description.")
+        else:
+            # Generate a new unique ID
+            existing_ids = [r["id"] for r in st.session_state.reminders]
+            new_id = max(existing_ids) + 1 if existing_ids else 1
+
+            new_reminder = {
+                "id": new_id,
+                "task": new_task.strip(),
+                "timestamp": datetime.datetime.combine(new_date, new_time),
+                "status": "active",
+            }
+            st.session_state.reminders.append(new_reminder)
+            save_reminders(st.session_state.reminders)
+            st.success(f"Reminder added: {new_task}")
+            st.rerun()
 
 # ---------------------------------------------------------------------------
 # 8. LIVE REMINDER SORTING — delegated entirely to logic.sort_reminders()
@@ -476,6 +550,7 @@ with col_missed:
                     for r in st.session_state.reminders:
                         if r["id"] == task_id:
                             r["status"] = "trashed"
+                            save_reminders(st.session_state.reminders)
                     st.rerun()
 
             with manage_col:
@@ -506,6 +581,7 @@ with col_missed:
                         for r in st.session_state.reminders:
                             if r["id"] == task_id:
                                 r["timestamp"] = new_datetime
+                                save_reminders(st.session_state.reminders)
 
                         st.session_state.reschedule_target_id = None
                         st.rerun()
