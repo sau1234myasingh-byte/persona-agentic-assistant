@@ -684,4 +684,4 @@ if user_prompt:
 
 st.divider()
 
-st.caption("🏄 Persona is an internship portfolio prototype built with Streamlit and Groq.")
+st.caption("🏄 Persona is a prototype built with Streamlit and Groq.")
