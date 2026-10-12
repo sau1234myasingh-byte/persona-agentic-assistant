@@ -2,8 +2,6 @@
 
 A Streamlit prototype for organising reminders and chatting with an AI assistant. It uses the Groq API for streamed LLM responses and includes a small, local nickname-to-email lookup.
 
-> Built during my internship at **Cipher Web Academy**. This repository is shared as a learning and portfolio project. The original internship brief, starter material, and any academy guidance remain credited to Cipher Web Academy; the code and presentation should not be represented as entirely independently commissioned production work.
-
 ## What it does
 
 - Tracks a demo unread-email count.
@@ -88,6 +86,3 @@ python -m unittest discover -s tests -v
 - Replace demo data with user-authorised calendar/email integrations.
 - Add more tests and continuous integration.
 
-## Publishing note
-
-Before publishing, confirm that your internship agreement permits public sharing. This repository intentionally excludes API keys, local environment files, virtual environments, and generated caches. Avoid committing your internship certificate to the repository; share it separately only if you are comfortable with the personal details it contains.
